@@ -14,6 +14,7 @@ from email import encoders
 SENDER_EMAIL = os.environ.get("GMAIL_USER")
 SENDER_PASSWORD = os.environ.get("GMAIL_PASS")
 RECEIVER_EMAIL = "abhijitsahu570@gmail.com"
+INDIAN_PROXY = os.environ.get("INDIAN_PROXY") # Added to pull your secure proxy configuration
 
 # Your exact URLs kept completely intact
 URLS = [
@@ -33,21 +34,21 @@ def get_ist_time():
 async def check_url(session, url, retries=2):
     target_url = url if url.startswith(("http://", "https://")) else f"https://{url}"
     headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate",
-    "Connection": "keep-alive",
-    "Upgrade-Insecure-Requests": "1"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1"
     }
     
     for attempt in range(retries + 1):
         try:
-            # Staggered pacing delay to stop bank firewalls from blocking Termux
             if attempt > 0:
                 await asyncio.sleep(2.0 * attempt)
                 
-            async with session.get(target_url, timeout=12, headers=headers, allow_redirects=True) as response:
+            # Modified request line to pass your Indian Proxy node seamlessly
+            async with session.get(target_url, timeout=12, headers=headers, proxy=INDIAN_PROXY, allow_redirects=True) as response:
                 code = response.status
                 try:
                     meaning = HTTPStatus(code).phrase
@@ -57,7 +58,7 @@ async def check_url(session, url, retries=2):
                 
         except (aiohttp.ClientConnectorError, aiohttp.ClientConnectorDNSNameError):
             if attempt < retries:
-                continue  # Retry to handle temporary DNS lookup stumbles
+                continue
             return url, "DNS_Error", "DNS Lookup Failed (Check VPN/Private DNS)"
         except asyncio.TimeoutError:
             if attempt < retries:
@@ -75,7 +76,6 @@ def send_email(file_path, filename, broken_links):
     msg['From'] = SENDER_EMAIL
     msg['To'] = RECEIVER_EMAIL
     
-    # Subject Line timestamp updated to IST
     current_ist = get_ist_time()
     msg['Subject'] = f"Server Monitor Update: {current_ist.strftime('%Y-%m-%d %H:%M')} IST"
 
@@ -107,7 +107,32 @@ def send_email(file_path, filename, broken_links):
 
 async def main():
     async with aiohttp.ClientSession() as session:
-        # Paced task processing to prevent sudden connection drop blocking
+        tasks = [check_url(session, url) for url in URLS]
+        results = await asyncio.gather(*tasks)
+
+        broken_links = [item for item in results if item[1] != 200]
+        
+        current_ist = get_ist_time()
+
+        if len(broken_links) > 0:
+            print(f"[{current_ist.strftime('%H:%M:%S')} IST] Status change detected. Generating log...")
+
+            timestamp = current_ist.strftime("%Y%m%d_%H%M%S")
+            filename = f'url_status_{timestamp}.csv'
+            file_path = f'./{filename}'
+
+            with open(file_path, 'w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(['URL', 'Status Code', 'Meaning'])
+                writer.writerows(results)
+
+            print(f"Results saved locally to: {file_path}")
+            send_email(file_path, filename, broken_links)
+        else:
+            print(f"[{current_ist.strftime('%H:%M:%S')} IST] All links healthy (200 OK). Skipping save and email.")
+
+# Run the async loop
+asyncio.run(main())
         tasks = [check_url(session, url) for url in URLS]
         results = await asyncio.gather(*tasks)
 
