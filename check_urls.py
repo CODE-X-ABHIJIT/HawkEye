@@ -47,7 +47,7 @@ async def check_url(session, url, retries=2):
             if attempt > 0:
                 await asyncio.sleep(2.0 * attempt)
                 
-            # Modified request line to pass your Indian Proxy node seamlessly
+            # Request line passing your Indian Proxy configuration seamlessly
             async with session.get(target_url, timeout=12, headers=headers, proxy=INDIAN_PROXY, allow_redirects=True) as response:
                 code = response.status
                 try:
@@ -107,7 +107,6 @@ def send_email(file_path, filename, broken_links):
 
 async def main():
     async with aiohttp.ClientSession() as session:
-        # Clear, uniform 8-space indentation block starts here
         tasks = [check_url(session, url) for url in URLS]
         results = await asyncio.gather(*tasks)
 
@@ -131,32 +130,8 @@ async def main():
             send_email(file_path, filename, broken_links)
         else:
             print(f"[{current_ist.strftime('%H:%M:%S')} IST] All links healthy (200 OK). Skipping save and email.")
-# Run the async loop
-asyncio.run(main())
-        tasks = [check_url(session, url) for url in URLS]
-        results = await asyncio.gather(*tasks)
-
-        # Filters targets where the status is not a standard 200
-        broken_links = [item for item in results if item[1] != 200]
-        
-        current_ist = get_ist_time()
-
-        if len(broken_links) > 0:
-            print(f"[{current_ist.strftime('%H:%M:%S')} IST] Status change detected. Generating log...")
-
-            timestamp = current_ist.strftime("%Y%m%d_%H%M%S")
-            filename = f'url_status_{timestamp}.csv'
-            file_path = f'./{filename}'
-
-            with open(file_path, 'w', newline='') as f:
-                writer = csv.writer(f)
-                writer.writerow(['URL', 'Status Code', 'Meaning'])
-                writer.writerows(results)
-
-            print(f"Results saved locally to: {file_path}")
-            send_email(file_path, filename, broken_links)
-        else:
-            print(f"[{current_ist.strftime('%H:%M:%S')} IST] All links healthy (200 OK). Skipping save and email.")
 
 # Run the async loop
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
+    
