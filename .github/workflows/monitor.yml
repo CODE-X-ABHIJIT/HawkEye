@@ -2,7 +2,7 @@ name: 24/7 Bank URL Monitor
 
 on:
   schedule:
-    # This CRON phrase tells the cloud to boot up and run your code automatically every 15 minutes
+    # This CRON phrase tells the cloud to boot up and run your code automatically every 5 minutes
     - cron: '*/5 * * * *'
   workflow_dispatch: # This adds a manual 'Run' button inside GitHub so you can test it anytime
 
