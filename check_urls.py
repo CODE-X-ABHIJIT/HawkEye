@@ -2,8 +2,8 @@ import asyncio
 import aiohttp
 import csv
 import smtplib
-import os  # Added to pull environmental values securely
-from datetime import datetime, timedelta, timezone # Updated for IST timezone tracking
+import os  
+from datetime import datetime, timedelta, timezone 
 from http import HTTPStatus
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -14,7 +14,7 @@ from email import encoders
 SENDER_EMAIL = os.environ.get("GMAIL_USER")
 SENDER_PASSWORD = os.environ.get("GMAIL_PASS")
 RECEIVER_EMAIL = "abhijitsahu570@gmail.com"
-INDIAN_PROXY = os.environ.get("INDIAN_PROXY") # Added to pull your secure proxy configuration
+INDIAN_PROXY = os.environ.get("INDIAN_PROXY") 
 
 # Your exact URLs kept completely intact
 URLS = [
@@ -33,22 +33,31 @@ def get_ist_time():
 
 async def check_url(session, url, retries=2):
     target_url = url if url.startswith(("http://", "https://")) else f"https://{url}"
+    
+    # Enhanced anti-bot browser headers
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "en-IN,en-GB;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Cache-Control": "max-age=0",
         "Connection": "keep-alive",
+        "Sec-Ch-Ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": '"Windows"',
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
         "Upgrade-Insecure-Requests": "1"
     }
     
     for attempt in range(retries + 1):
         try:
             if attempt > 0:
-                await asyncio.sleep(2.0 * attempt)
+                await asyncio.sleep(3.0 * attempt)
                 
-            # Request line passing your Indian Proxy configuration seamlessly
-            async with session.get(target_url, timeout=12, headers=headers, proxy=INDIAN_PROXY, allow_redirects=True) as response:
+            async with session.get(target_url, timeout=15, headers=headers, proxy=INDIAN_PROXY, allow_redirects=True) as response:
                 code = response.status
                 try:
                     meaning = HTTPStatus(code).phrase
@@ -106,7 +115,8 @@ def send_email(file_path, filename, broken_links):
         print(f"Failed to send email: {e}")
 
 async def main():
-    async with aiohttp.ClientSession() as session:
+    # Enabled cookie jar tracking to pass intermediate firewall challenges
+    async with aiohttp.ClientSession(cookie_jar=aiohttp.CookieJar()) as session:
         tasks = [check_url(session, url) for url in URLS]
         results = await asyncio.gather(*tasks)
 
