@@ -25,5 +25,5 @@ jobs:
       env:
         GMAIL_USER: ${{ secrets.GMAIL_USER }}
         GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
-      run: python check_urls.py
+      run: ./run_loop.sh
       
