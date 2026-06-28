@@ -19,7 +19,7 @@ RECEIVER_EMAIL = "abhijitsahu570@gmail.com"
 URLS = [
     "https://shivalik.bank.in/",
     "https://netbanking.shivalik.bank.in/",
-    "https://smeib.shivalik.bank.in/#/login",
+    "https://smeib.shivalik.bank.in/",
     "https://matm.shivalikbank.com/GreenPinWeb/",
     "https://shivalik.bank.in/open-account",
     "https://shivalik.bank.in/unclaimed-deposits",
@@ -32,7 +32,14 @@ def get_ist_time():
 
 async def check_url(session, url, retries=2):
     target_url = url if url.startswith(("http://", "https://")) else f"https://{url}"
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1"
+    }
     
     for attempt in range(retries + 1):
         try:
