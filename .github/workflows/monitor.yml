@@ -1,0 +1,29 @@
+name: 24/7 Bank URL Monitor
+
+on:
+  schedule:
+    # This CRON phrase tells the cloud to boot up and run your code automatically every 15 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # This adds a manual 'Run' button inside GitHub so you can test it anytime
+
+jobs:
+  run-monitor:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository files
+      uses: actions/checkout@v4
+
+    - name: Initialize Python environment
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install required dependencies
+      run: pip install aiohttp
+
+    - name: Execute script execution node
+      env:
+        GMAIL_USER: ${{ secrets.GMAIL_USER }}
+        GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
+      run: python check_urls.py
+      
