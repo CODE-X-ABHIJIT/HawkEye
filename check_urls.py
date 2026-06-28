@@ -106,7 +106,7 @@ async def main():
 
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f'url_status_{timestamp}.csv'
-            file_path = f'./storage/shared/Documents/{filename}'
+            file_path = f'./{filename}'
 
             with open(file_path, 'w', newline='') as f:
                 writer = csv.writer(f)
