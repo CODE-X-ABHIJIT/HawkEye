@@ -107,6 +107,7 @@ def send_email(file_path, filename, broken_links):
 
 async def main():
     async with aiohttp.ClientSession() as session:
+        # Clear, uniform 8-space indentation block starts here
         tasks = [check_url(session, url) for url in URLS]
         results = await asyncio.gather(*tasks)
 
@@ -130,7 +131,6 @@ async def main():
             send_email(file_path, filename, broken_links)
         else:
             print(f"[{current_ist.strftime('%H:%M:%S')} IST] All links healthy (200 OK). Skipping save and email.")
-
 # Run the async loop
 asyncio.run(main())
         tasks = [check_url(session, url) for url in URLS]
