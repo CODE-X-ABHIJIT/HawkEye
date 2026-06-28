@@ -3,7 +3,7 @@ import aiohttp
 import csv
 import smtplib
 import os  # Added to pull environmental values securely
-from datetime import datetime
+from datetime import datetime, timedelta, timezone # Updated for IST timezone tracking
 from http import HTTPStatus
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -25,6 +25,11 @@ URLS = [
     "https://shivalik.bank.in/unclaimed-deposits",
 ]
 
+# Helper function to get the current time in IST (GMT+5:30)
+def get_ist_time():
+    ist_zone = timezone(timedelta(hours=5, minutes=30))
+    return datetime.now(ist_zone)
+
 async def check_url(session, url, retries=2):
     target_url = url if url.startswith(("http://", "https://")) else f"https://{url}"
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
@@ -43,7 +48,7 @@ async def check_url(session, url, retries=2):
                     meaning = "Unknown Status Code"
                 return url, code, meaning
                 
-        except (aiohttp.ClientConnectorError, aiohttp.ClientConnectorDNSNameError) as dns_err:
+        except (aiohttp.ClientConnectorError, aiohttp.ClientConnectorDNSNameError):
             if attempt < retries:
                 continue  # Retry to handle temporary DNS lookup stumbles
             return url, "DNS_Error", "DNS Lookup Failed (Check VPN/Private DNS)"
@@ -62,10 +67,12 @@ def send_email(file_path, filename, broken_links):
     msg = MIMEMultipart()
     msg['From'] = SENDER_EMAIL
     msg['To'] = RECEIVER_EMAIL
-    # Modified Subject Line to be neutral
-    msg['Subject'] = f"Server Monitor Update: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+    
+    # Subject Line timestamp updated to IST
+    current_ist = get_ist_time()
+    msg['Subject'] = f"Server Monitor Update: {current_ist.strftime('%Y-%m-%d %H:%M')} IST"
 
-    body = "Hello,\n\nThe following monitored website(s) are reporting status anomalies:\n\n"
+    body = f"Hello,\n\nThe following monitored website(s) are reporting status anomalies (Checked at {current_ist.strftime('%H:%M:%S')} IST):\n\n"
     for url, code, meaning in broken_links:
         body += f"🛑 URL: {url}\n"
         body += f"   Status Code: {code}\n"
@@ -99,12 +106,13 @@ async def main():
 
         # Filters targets where the status is not a standard 200
         broken_links = [item for item in results if item[1] != 200]
+        
+        current_ist = get_ist_time()
 
         if len(broken_links) > 0:
-            current_time = datetime.now().strftime('%H:%M:%S')
-            print(f"[{current_time}] Status change detected. Generating log...")
+            print(f"[{current_ist.strftime('%H:%M:%S')} IST] Status change detected. Generating log...")
 
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = current_ist.strftime("%Y%m%d_%H%M%S")
             filename = f'url_status_{timestamp}.csv'
             file_path = f'./{filename}'
 
@@ -116,8 +124,7 @@ async def main():
             print(f"Results saved locally to: {file_path}")
             send_email(file_path, filename, broken_links)
         else:
-            current_time = datetime.now().strftime('%H:%M:%S')
-            print(f"[{current_time}] All links healthy (200 OK). Skipping save and email.")
+            print(f"[{current_ist.strftime('%H:%M:%S')} IST] All links healthy (200 OK). Skipping save and email.")
 
 # Run the async loop
 asyncio.run(main())
