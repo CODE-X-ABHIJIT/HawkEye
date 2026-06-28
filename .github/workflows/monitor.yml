@@ -1,8 +1,9 @@
 name: 24/7 Bank URL Monitor
 
 on:
-  repository_dispatch:
-    types: [external-trigger]
+  schedule:
+    - cron: '*/15 * * * *' # Set to 15 mins to stay safely under your 2,000 monthly limit
+  workflow_dispatch:
 
 jobs:
   run-monitor:
@@ -24,8 +25,5 @@ jobs:
         GMAIL_USER: ${{ secrets.GMAIL_USER }}
         GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
         INDIAN_PROXY: ${{ secrets.INDIAN_PROXY }}
-      # This fixes the permission denied issue by giving the file run rights dynamically
-      run: |
-        chmod +x ./run_loop.sh
-        ./run_loop.sh
+      run: python check_urls.py
         
