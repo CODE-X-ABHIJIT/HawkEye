@@ -1,29 +1,29 @@
-name: 24/7 Bank URL Monitor
+name: FastCron Bank Monitor
 
 on:
-  schedule:
-    - cron: '*/15 * * * *' # Set to 15 mins to stay safely under your 2,000 monthly limit
-  workflow_dispatch:
+  repository_dispatch:
+    types: [trigger-monitor]  # FastCron will call this specific event name
 
 jobs:
   run-monitor:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository files
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Initialize Python environment
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-node-version: '3.11'
 
-    - name: Install required dependencies
-      run: pip install aiohttp
+      - name: Install Dependencies
+        run: |
+          pip install curl_cffi
 
-    - name: Execute script execution node
-      env:
-        GMAIL_USER: ${{ secrets.GMAIL_USER }}
-        GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
-        INDIAN_PROXY: ${{ secrets.INDIAN_PROXY }}
-      run: python check_urls.py
+      - name: Run Script
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
+          INDIAN_PROXY: ${{ secrets.INDIAN_PROXY }}
+        run: python check_urls.py
         
