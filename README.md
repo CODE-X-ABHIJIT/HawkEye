@@ -67,9 +67,9 @@ Whenever a monitored website becomes unavailable or returns an unexpected HTTP s
            Generate CSV Report      |
                      |              |
                      |      Print "All links healthy"
-                     |              |
-                     v              |
-             Send Email Alert <-----+
+                     |              
+                     v              
+             Send Email Alert 
 ```
 
 ---
