@@ -30,7 +30,21 @@ URLS = [
 def get_ist_time():
     ist_zone = timezone(timedelta(hours=5, minutes=30))
     return datetime.now(ist_zone)
+async def verify_proxy(session):
+    try:
+        print(f"Using Proxy -> {INDIAN_PROXY}")
+        async with session.get(
+            "https://ipinfo.io/json",
+            proxy=INDIAN_PROXY if INDIAN_PROXY else None,
+            timeout=10
+        ) as response:
 
+            print("\n========== PROXY STATUS ==========")
+            print(await response.text())
+            print("==================================\n")
+
+    except Exception as e:
+        print(f"Proxy verification failed: {e}")
 async def check_url(session, url, retries=2):
     target_url = url if url.startswith(("http://", "https://")) else f"https://{url}"
     
@@ -48,18 +62,30 @@ async def check_url(session, url, retries=2):
     for attempt in range(retries + 1):
         try:
             if attempt > 0:
-                await asyncio.sleep(3.0 * attempt)
-                
+                wait = min(2 ** attempt, 10)
+                print(f"Retry {attempt}/{retries} after {wait} sec")
+                await asyncio.sleep(wait)                
             # FIX: Added skip_auto_headers to delete hidden "aiohttp" indicators from the network stream
+            start = asyncio.get_running_loop().time()
+
             async with session.get(
-                target_url, 
-                timeout=15, 
-                headers=headers, 
-                proxy=INDIAN_PROXY, 
+                target_url,
+                headers=headers,
+                proxy=INDIAN_PROXY,
                 allow_redirects=True,
+                ssl=False,
                 skip_auto_headers=["User-Agent", "Client", "Accept", "Accept-Encoding"]
             ) as response:
+                elapsed = round(asyncio.get_running_loop().time() - start, 2)
                 code = response.status
+                print(f"{url}")
+                print(f"Status : {code}")
+                print(f"Time   : {elapsed}s")
+                print("--------------------------")
+                if code in [403, 429, 500, 502, 503, 504] and attempt < retries:
+                    print("Retrying...\n")
+                    await asyncio.sleep(5)
+                    continue
                 try:
                     meaning = HTTPStatus(code).phrase
                 except ValueError:
@@ -116,12 +142,35 @@ def send_email(file_path, filename, broken_links):
         print(f"Failed to send email: {e}")
 
 async def main():
-    async with aiohttp.ClientSession(cookie_jar=aiohttp.CookieJar()) as session:
-        tasks = [check_url(session, url) for url in URLS]
+
+    connector = aiohttp.TCPConnector(
+        limit=20,
+        ttl_dns_cache=300,
+        ssl=False
+    )
+
+    timeout = aiohttp.ClientTimeout(
+        total=30,
+        connect=10,
+        sock_connect=10,
+        sock_read=20
+    )
+
+    async with aiohttp.ClientSession(
+        connector=connector,
+        timeout=timeout,
+        cookie_jar=aiohttp.CookieJar()
+    ) as session:
+        await verify_proxy(session)
+
+        tasks = [check_url(session, url) for url in URLS]   
         results = await asyncio.gather(*tasks)
 
-        broken_links = [item for item in results if item[1] != 200]
-        
+        broken_links = [
+            item for item in results
+            if item[1] not in [200, 301, 302]
+        ]
+                
         current_ist = get_ist_time()
 
         if len(broken_links) > 0:
