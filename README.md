@@ -251,7 +251,7 @@ Finish
 
 **Abhijit Sahu**
 
-AWS • Kubernetes • Docker •Jenkins • Git 
+AWS | Kubernetes | Docker | Jenkins | Git 
 ---
 
 # License
