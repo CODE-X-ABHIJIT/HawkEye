@@ -1,4 +1,4 @@
-name: FastCron Bank Monitor
+name: Application Monitor
 
 on:
   repository_dispatch:
