@@ -104,7 +104,7 @@ HawkEye/
 │       └── monitor.yml
 │
 ├── check_urls.py
-├── requirements.txt
+├── run_loop.sh
 └── README.md
 ```
 
