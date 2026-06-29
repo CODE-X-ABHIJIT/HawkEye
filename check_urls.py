@@ -20,7 +20,7 @@ INDIAN_PROXY = os.environ.get("INDIAN_PROXY")
 URLS = [
     "https://shivalik.bank.in/",
     "https://netbanking.shivalik.bank.in/",
-    "https://smeib.shivalik.bank.in/",
+    #"https://smeib.shivalik.bank.in/",
     "https://matm.shivalikbank.com/GreenPinWeb/",
     "https://shivalik.bank.in/open-account",
     "https://shivalik.bank.in/unclaimed-deposits",
