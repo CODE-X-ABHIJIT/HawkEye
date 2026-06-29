@@ -92,7 +92,7 @@ async def check_url(session, url, retries=2):
                     meaning = "Unknown Status Code"
                 return url, code, meaning
                 
-        except (aiohttp.ClientConnectorError, aiohttp.ClientConnectorDNSNameError):
+        except (aiohttp.ClientConnectorError, aiohttp.ClientConnectorDNSError):
             if attempt < retries:
                 continue
             return url, "DNS_Error", "DNS Lookup Failed (Check VPN/Private DNS)"
