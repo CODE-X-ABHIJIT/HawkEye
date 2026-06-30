@@ -1,4 +1,4 @@
-# 🦅 HawkEye - End-to-End Website Monitoring & Alerting Platform
+# 🦅 HawkEye - Website Monitoring & Alerting Platform
 
 ## Overview
 
